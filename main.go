@@ -5,7 +5,6 @@ import (
 	"berbagi/internal/handler"
 	"berbagi/internal/repository"
 	"berbagi/internal/services"
-	"fmt"
 	"log"
 
 	"github.com/gin-gonic/gin"
@@ -32,9 +31,8 @@ func main() {
 	userService := services.NewService(userRepository)
 
 	authService := auth.NewService()
-	fmt.Println(authService.GenerateToken(3))
 
-	userHandler := handler.NewUserHandler(userService)
+	userHandler := handler.NewUserHandler(userService, authService)
 
 	router := gin.Default()
 	api := router.Group("/api/v1")

@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"berbagi/internal/auth"
 	"berbagi/internal/formatter"
 	"berbagi/internal/helper"
 	"berbagi/internal/models"
@@ -15,10 +16,11 @@ import (
 
 type userHandler struct {
 	userService services.Service
+	authService auth.Service
 }
 
-func NewUserHandler(userService services.Service) *userHandler {
-	return &userHandler{userService}
+func NewUserHandler(userService services.Service, authService auth.Service) *userHandler {
+	return &userHandler{userService, authService}
 }
 
 func (h *userHandler) RegisterUser(c *gin.Context) {
@@ -59,11 +61,17 @@ func (h *userHandler) RegisterUser(c *gin.Context) {
 
 	newuser, err := h.userService.RegisterUser(input)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, nil)
-		return
+		response := helper.APIResponse("Register account failed", http.StatusBadRequest, "error", nil)
+		c.JSON(http.StatusBadRequest, response)
 	}
 
-	formatter := formatter.FormatUser(newuser, "tokentokentoken")
+	token, err := h.authService.GenerateToken(newuser.ID)
+	if err != nil {
+		response := helper.APIResponse("Register account failed", http.StatusBadRequest, "error", nil)
+		c.JSON(http.StatusBadRequest, response)
+	}
+
+	formatter := formatter.FormatUser(newuser, token)
 
 	response := helper.APIResponse("Account has been registered", http.StatusOK, "sucess", formatter)
 
@@ -99,7 +107,13 @@ func (h *userHandler) Login(c *gin.Context) {
 		c.JSON(http.StatusUnprocessableEntity, response)
 	}
 
-	formatter := formatter.FormatUser(loggedinUser, "tokentokentoken")
+	token, err := h.authService.GenerateToken(loggedinUser.ID)
+	if err != nil {
+		response := helper.APIResponse("Login failed", http.StatusBadRequest, "error", nil)
+		c.JSON(http.StatusBadRequest, response)
+	}
+
+	formatter := formatter.FormatUser(loggedinUser, token)
 
 	response := helper.APIResponse("Successfuly loggedin", http.StatusOK, "success", formatter)
 
