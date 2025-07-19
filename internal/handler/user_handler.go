@@ -178,8 +178,8 @@ func (h *userHandler) UploadAvatar(c *gin.Context) {
 		return
 	}
 
-	// Harusnya dapat jwt,
-	userID := 1
+	currentUser := c.MustGet("currentUser").(models.User)
+	userID := currentUser.ID
 
 	path := fmt.Sprintf("images/%d-%s", userID, file.Filename)
 
